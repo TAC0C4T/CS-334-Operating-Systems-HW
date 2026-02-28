@@ -59,43 +59,46 @@ int main(int argc, char *argv[])
 	printf("Server time is ");
 
 	while(1) {
-		// reading from the socket
-		buff = buffer;
-		bytes_to_read = STRLEN+1;
-		while((n = read(sockfd, buff, bytes_to_read)) > 0)
-		{
-			buff += n;
-			bytes_to_read -= n;
-		}
-		printf("%s\n\n",buffer);
+		char ts[256];
 
-		fgets(buff, STRLEN, stdin); // read input
-		// Check if input is "exit"
-		if(strncmp(buff, "exit", 4) == 0) {
-			printf("Exiting...\n");
+		strncpy(ts, ctime(&ticks), sizeof(ts));
+		ts[strlen(ts) - 1] = '\0';
+		printf("Client[%s]:", ts);
+		fflush(stdout);
+		// read message
+		if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+			strncpy(buffer, "quit", sizeof(buffer));
+			buffer[sizeof(buffer)-1] = '\0';
+		}
+		buffer[strcspn(buffer, "\n")] = '\0';
+
+		if (send(sockfd, buffer, strlen(buffer), 0) < 0) {
+			perror("brokey");
 			break;
 		}
-		
-		write(sockfd, buff, strlen(buff));
-		printf("Server: %s\n", buffer);
+		//if quit quit
+
+		if (strcmp(buffer, "quit") == 0) {
+			printf("Connection Terminated\n");
+			break;
+		}
+
+		//recieve from server
+		bzero(buffer, sizeof(buffer));
+		n = recv(sockfd, ts, STRLEN, 0);
+		if (n <= 0) {
+			printf("closed\n");
+			break;
+		}
+		buffer[n] = '\0';
+		if (strcmp(buffer, "quit") == 0) {
+			close(sockfd);
+			return 0;
+		}
 
 	}
 
 
-	
-	// reading from the socket
-	// buff = buffer;
-	// bytes_to_read = STRLEN+1;
-	// while((n = read(sockfd, buff, bytes_to_read)) > 0)
-	// {
-	// 	buff += n;
-	// 	bytes_to_read -= n;
-	// }
-	// printf("%s\n\n",buffer);
-
-	// fgets(buff, STRLEN, stdin); // read input
-	// write(sockfd, buff, strlen(buff));
-	// printf("Server: %s\n", buffer);
 
 	
 
