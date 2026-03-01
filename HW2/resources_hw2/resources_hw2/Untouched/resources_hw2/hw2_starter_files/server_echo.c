@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 	}
 
 	bzero((char *) &server_addr, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
+       	server_addr.sin_family = AF_INET;
 	server_addr.sin_addr.s_addr = htons(INADDR_ANY);	// big-endian conversion
 	server_addr.sin_port = htons(server_port);	
 
@@ -75,63 +75,23 @@ int main(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 		}
 
-		char buffer[STRLEN + 1];
-		int n;
-		int server_quit = 0;
-		while(1) {
-			bzero(buffer, sizeof(buffer));
-			n = read(nsockfd, buffer, STRLEN);
-			if(n <= 0) {
-				printf("client fail\n");
-				break;
-			}
-
-			//get client message
-			buffer[n] = '\0';
-
-			ticks = time(NULL);
-			strncpy(t, ctime(&ticks), sizeof(t));
-			t[strlen(t) - 1] = '\0';
-			printf("Client[%s]:$ %s\n", t, buffer);
-
-			if(strcmp(buffer, "quit") == 0) {
-				printf("client closed\n");
-				break;
-			}
-
-			//send server message
-			ticks = time(NULL);
-			strncpy(t, ctime(&ticks), sizeof(t));
-			t[strlen(t) - 1] = '\0';
-			printf("Server[%s]:$ ", t);
-			fflush(stdout);
-
-			bzero(buffer, sizeof(buffer));
-			if(fgets(buffer, sizeof(buffer), stdin) == NULL) {
-				strncpy(buffer, "quit", sizeof(buffer));
-			}
-			buffer[strcspn(buffer, "\n")] = '\0';
-			
-
-			//fail checks
-			if (write(nsockfd, buffer, strlen(buffer)) < 0) {
-				perror("brokey");
-				break;
-			}
-
-			if (strcmp(buffer, "quit") == 0) {
-				server_quit = 1;
-				break;
-			}
+		ticks = time(NULL);
+		strcpy(t, (char *) ctime(&ticks));
+		t[strlen(t)-1] = '\0';
+		if(write(nsockfd, t, STRLEN+1) < 0)
+		{
+			fprintf(stderr,"Error writing to socket!\n");
+			exit(EXIT_FAILURE);
 		}
 
-	close(nsockfd);
-	if(server_quit) {
-		break;
+	//	ticks = time(NULL);
+	//	strcpy(t, (char *) ctime(&ticks));
+	//	t[strlen(t)-1] = '\0';
+		close(nsockfd);
+	} // end of infinite loop
 
-	}
-}
 	close(sockfd);
+
 	return 0;
 } // end of main
 

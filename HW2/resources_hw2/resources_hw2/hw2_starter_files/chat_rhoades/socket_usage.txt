@@ -1,0 +1,14 @@
+ssize_t write(int fd, const void *buf, size_t nbytes);
+
+Argument 	Description
+fd
+	It is the file descriptor which has been obtained from the call to open. It is an integer value. The values 0, 1, 2 can also be given, for standard input, standard output & standard error, respectively .
+buf
+	It points to a character array, which can be used to store content obtained from the file pointed to by fd.
+nbytes
+	It specifies the number of bytes to be written from the file into the character array.
+
+ssize_t read(size_t size;
+                        int sockfd, void buf[size], size_t size);
+
+                        
