@@ -82,16 +82,23 @@ int main(int argc, char *argv[])
 			break;
 		}
 
-		//recieve from server
+		// receive from server
 		bzero(buffer, sizeof(buffer));
 		n = read(sockfd, buffer, STRLEN);
-		printf("Server [%s]: %s\n", ts, buffer);
-		if (n <= 0) {
+
+		if (n < 0) {
+			perror("read error");
+			break;
+		}
+		if (n == 0) {
 			printf("closed\n");
 			break;
 		}
-		//if quit quit
+
 		buffer[n] = '\0';
+		printf("Server [%s]: %s\n", ts, buffer);
+
+		// if quit, quit
 		if (strcmp(buffer, "quit") == 0) {
 			close(sockfd);
 			return 0;

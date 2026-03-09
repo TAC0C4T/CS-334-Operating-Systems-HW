@@ -17,16 +17,20 @@
 /* macro defintion */
 #define NUM_THREADS 4
 
+int localCounts[NUM_THREADS];
+
 /* structure declaration */
 struct range {
 	int start;	// first value in the range
 	int end;	// last value in the range
+	int id;
 };
 typedef struct range Range;
 struct timeval stime, etime;
 
 /* function declaration for thread entry point */
 void *findPrimes(void *param);
+int isPrime(int num);
 
 
 /*
@@ -36,9 +40,12 @@ void *findPrimes(void *param);
 int main(int argc, char *argv[])
 {
 	/* declare and initialize necessary variables */
+	int n = 0;
+	Range ranges[NUM_THREADS];
 	pthread_t tid1, tid2, tid3, tid4;		// the thread identifier 
 	pthread_t tid[NUM_THREADS];
 	pthread_attr_t attr;	// set of thread attribute
+	struct timeval startTime, endTime;
 	
 
 	/* process command-line input with sanitation checks */
@@ -47,21 +54,39 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	if (atoi(argv[1]) < 100) {
+	if (atoi(argv[1]) < 1000) {
 		fprintf(stderr, "%d must be > 999\n",atoi(argv[1]));
 		return -1;
 	}
 
+	n = atoi(argv[1]);
+
 	/* log the start time of program execution */
-	gettimeofday(&stime, NULL);
+	gettimeofday(&startTime, NULL);
 	
 	
 	/* calculate the range for each subset of the initial data set of size n */
-	// DUMMIED UP -- WRITE YOUR CODE HERE //
+	int totalNums = n - 1;
+	int range = totalNums / NUM_THREADS;
+	int remainder = totalNums % NUM_THREADS;
+	int current = 0;
+
+	for (int i = 0; i < NUM_THREADS; i++) {
+		int size = range + (i < remainder?1:0);
+		ranges[i].start = current;
+		ranges[i].end = current + size - 1;
+		ranges[i].id = i;
+		current = ranges[i].end + 1;
+	}
 	
 
 	/* get ready for the final output */
-	// DUMMIED UP -- WRITE YOUR CODE HERE //
+	
+	for (int i = 0; i < NUM_THREADS; i++) {
+		localCounts[i] = 0;
+	}
+	
+
 
 
 	/* create a thread for calculating prime numbers with in four different sub ranges.
@@ -70,19 +95,42 @@ int main(int argc, char *argv[])
 	 *    thread entry point
 	 */
 	// DUMMIED UP -- WRITE YOUR CODE HERE //
+	for (int i = 0; i < NUM_THREADS; i++) {
+		if (pthread_create(&tid[i], NULL, findPrimes, &ranges[i]) != 0) {
+			perror("pthread_create");
+			return 0;
+		}
+	}
 	
 
 	/* wait for the child threads to exit, i.e., fork-join strategy */
 	// DUMMIED UP -- WRITE YOUR CODE HERE //
+
+	for (int i = 0; i < NUM_THREADS; i++) {
+		if(pthread_join(tid[i], NULL) != 0) {
+			perror("pthread_join");
+			return 0;
+		}
+	}
 	
 
 	/* log the end time of program execution */
 	// DUMMIED UP -- WRITE YOUR CODE HERE //
+	gettimeofday(&endTime, NULL);
 	
 
 	/* print the total elapsed time for the multi-threaded program execution */
 	// DUMMIED UP -- WRITE YOUR CODE HRER //
-	
+	double total = (endTime.tv_sec - startTime.tv_sec) + (endTime.tv_usec - startTime.tv_usec) / 1000000.0;
+
+	printf("Execution time for multi-threaded program: %f seconds\n", total);
+
+	int totalCount = 0;
+	for (int i = 0; i < NUM_THREADS; i++) {
+		totalCount += localCounts[i];
+	}
+
+	printf("Total primes between 0 and %d: %d\n", n, totalCount);
 
 	return 0;
 } // end of main
@@ -95,15 +143,21 @@ int main(int argc, char *argv[])
  * */
 void *findPrimes(void *param)
 {
-	/* local variable declarations for number of primes, local range, etc.*/
-	// DUMMIED UP -- WRITE YOUR CODE HERE //
-	
-		
-	/* output the staring and ending range of number of the thread and total number of primes */
-	// DUMMIED UP -- WRITE YOUR CODE HERE //
-	
-	/* exit thread here */
-	// DUMMIED UP -- WRITE YOUR CODE HERE //
-	
-	 
-} // end of findPrimes
+    Range *r = (Range *)param;
+
+    for (int i = r->start; i <= r->end; i++) {
+        if (isPrime(i)) {
+            localCounts[r->id]++; 
+        }
+    }
+    return NULL;
+}
+
+
+int isPrime(int num) {
+    if (num < 2) return 0;
+    for (int i = 2; i * i <= num; i++) {  
+        if (num % i == 0) return 0;
+    }
+    return 1;
+}
