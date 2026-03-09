@@ -69,7 +69,9 @@ int main(int argc, char *argv[])
 
 	/* print the total number of primes (i.e., count) and total  execution time from start and end times */
 	printf("Total primes: %d\n", count);
-	printf("Time: %dms\n", etime.tv_usec - stime.tv_usec);
+	double total = (etime.tv_sec  - stime.tv_sec)
+             + (etime.tv_usec - stime.tv_usec) / 1000000.0;
+	printf("Execution time for single-threaded program: %f seconds\n", total);
 	
 	
 	
@@ -93,11 +95,9 @@ void *findPrimes(void *param)
 } // end of isPrime
 
 int isPrime(int num) {
-	int prime = 1;
-	for (int i = 2; i < num; i++) {
-		if (num % i == 0) {
-			prime = 0;
-		}
-	}
-	return prime;
+    if (num < 2) return 0;
+    for (int i = 2; i * i <= num; i++) {  
+        if (num % i == 0) return 0;
+    }
+    return 1;
 }
