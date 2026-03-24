@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
 {
   /* local variable declarations */
   pthread_t tid[NUM_THREADS];
-  pthread_attr_t attr;
 
 
  
@@ -56,7 +55,9 @@ int main(int argc, char *argv[])
   SubRange *sRange = (SubRange *)malloc(sizeof(SubRange));	// create a SubRange pointer variable to set the 
   								// subrange of dataset before passing to the thread
   // -----DUMMIED UP -- WRITE YOUR CODE HERE------ //
-  pthread_create(&tid[0], &attr, sorter, sRange);
+  sRange->startIndex = 0;
+  sRange->endIndex = SIZE / 2 - 1;
+    pthread_create(&tid[0], NULL, sorter, sRange);
   
 
 
@@ -64,6 +65,11 @@ int main(int argc, char *argv[])
   //======================>> 15 POINTS <<=====================
   /* create the second sorter thread (thread_1) with appropriate subrange -- as above */
   // -----DUMMIED UP -- WRITE YOUR CODE HERE------ //
+    SubRange *sRange2 = (SubRange *)malloc(sizeof(SubRange));
+    sRange2->startIndex = SIZE / 2;
+    sRange2->endIndex = SIZE - 1;
+    pthread_create(&tid[1], NULL, sorter, sRange2);
+
 
 
 
@@ -71,6 +77,7 @@ int main(int argc, char *argv[])
   /* wait for the sorter threads to return to the parent thread -- fork-join strategy */
   for(int i = 0; i < NUM_THREADS-1; i++) {
   	// -----DUMMIED UP -- WRITE YOUR CODE HERE------- //
+    pthread_join(tid[i], NULL);
 	
 
   } // end of for
@@ -82,13 +89,18 @@ int main(int argc, char *argv[])
    * Note: Here, the 'SubRange' struct will contain the startIndex values of
    * thread_0 and thread_1 in the startIndex and endIndex, respectively.
    * */
+    // -----DUMMIED UP -- WRITE YOUR CODE HERE------ //
+    SubRange *mRange = (SubRange *)malloc(sizeof(SubRange));
+    mRange->startIndex = 0;
+    mRange->endIndex = SIZE / 2;
+    pthread_create(&tid[2], NULL, merger, mRange);
 
 
 
   //======================>> 5 POINTS <<=====================
   /* wait for the merger thread to finish */
   // -----DUMMIED UP -- WRITE YOUR CODE HERE------ //
-
+  pthread_join(tid[2], NULL);
 
 
   /* output the sorted array */
@@ -129,11 +141,12 @@ void *sorter(void *param)
     for (int i = 0; i < n; i++) {
         dataSet[range->startIndex + i] = arr[i];
     }
-    free(arr);
+    //free(arr);
 
     
     /* exit sorter thread */
     // -----DUMMIED UP -- WRITE YOUR CODE HERE------ //
+    pthread_exit(0);
 
 
 
@@ -151,34 +164,38 @@ void *merger(void *param)
     //======================>> 20 POINTS <<=====================
     /* Implement merge sort for merging the two sublist of the dataset */
     // -----DUMMIED UP -- WRITE YOUR CODE HERE------ //
-    int *arrayFirst[SIZE/2];
-    int *arraySecond[SIZE/2];
+    SubRange *range = (SubRange *)param;
+    int left = range->startIndex;
+    int mid = range->endIndex;
+    int right = mid;
+    int leftEnd = mid - 1;
+    int rightEnd = SIZE - 1;
+    int out = left;
 
-    for (int i = 0; i < SIZE/2; i++) {
-        if (i < SIZE/2) {
-            arrayFirst[i] = result[i];
+    while (left <= leftEnd && right <= rightEnd) {
+        if (dataSet[left] <= dataSet[right]) {
+            result[out++] = dataSet[left++];
         } else {
-            arraySecond[i - SIZE/2] = result[i];
+            result[out++] = dataSet[right++];
         }
     }
 
-    int arrOne = 0;
-    int arrTwo = 0;
+    while (left <= leftEnd) {
+        result[out++] = dataSet[left++];
+    }
 
-    for (int i = 0; i < SIZE; i++) {
-        if (arrayFirst[arrOne] < arraySecond[arrTwo]) {
-            dataSet[i] = arrayFirst[arrOne];
-            arrOne++;
-        } else {
-            dataSet[i] = arraySecond[arrTwo];
-            arrTwo++;
-        }
+    while (right <= rightEnd) {
+        result[out++] = dataSet[right++];
+    }
+
+    for (int i = range->startIndex; i <= rightEnd; i++) {
+        dataSet[i] = result[i];
     }
 
 
 
     /* exit merger thread */
     // -----DUMMIED UP -- WRITE YOUR CODE HERE------ //
-
+    pthread_exit(0);
 
 } // end of merger
